@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>RASPREM</h1>
+    <h2 id="status"></h2>
+    <form name="credentials">
+      <label for="SSID">SSID:</label>
+      <input name="SSID" />
+      <br />
+      <label for="pass">Password:</label>
+      <input name="pass" />
+      <input type="submit" />
+    </form>
+
+    <script>
+      const form = document.forms.credentials;
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = {};
+        for (const [name, value] of formData) {
+          console.log(name, value);
+          data[name] = value;
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/credentials", true);
+
+        xhr.setRequestHeader("Content-Type", "application/json");
+
+        xhr.onreadystatechange = () => {
+          if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+          } else if (this.readyState === XMLHttpRequest.DONE) {
+            console.error("Did not receive 200: ", this.status);
+          }
+        };
+
+        xhr.send(JSON.stringify(data));
+      });
+    </script>
+  </body>
+</html>
