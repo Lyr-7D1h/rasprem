@@ -8,7 +8,7 @@ set -u # Exit when unset paramter is extended
 
 # Input validation
 if [ $# != 3 ]; then
-  echo "./setup {IP} {AP_SSID} {AP_PASS}"
+  echo "./remsetup {IP} {AP_SSID} {AP_PASS}"
   exit 1
 fi
 
