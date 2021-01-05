@@ -39,11 +39,10 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update && apt-get upgrade -y
 
 # Install needed packages
-apt-get install -y macchanger dnsmasq hostapd
+apt-get install -y macchanger dnsmasq hostapd dhcpcd
 
 # Not sure if needed
-# From https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md
-# apt-get install -y netfilter-persistent iptables-persistent
+apt-get install -y netfilter-persistent iptables-persistent
 
 # Change hostname
 echo "Galaxy S10+" > /etc/hostname
@@ -69,6 +68,34 @@ bogus-priv
 dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
 EOF
 
+
+# Populate `/etc/hostapd/hostapd.conf` 
+bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
+ctrl_interface=/var/run/hostapd
+ctrl_interface_group=0
+country_code=NL
+interface=ap0
+driver=nl80211
+ssid=${AP_SSID}
+hw_mode=g
+channel=7
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=$AP_PASS
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP CCMP
+rsn_pairwise=CCMP
+EOF
+
+# Populate `/etc/default/hostapd`
+bash -c 'cat > /etc/default/hostapd' << EOF
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
+EOF
+
+
 # Populate `/etc/network/interfaces`
 bash -c 'cat > /etc/network/interfaces' << EOF
 source-directory /etc/network/interfaces.d
@@ -87,30 +114,12 @@ iface wlan0 inet manual
 iface AP1 inet dhcp
 EOF
 
-# Setup Hostapd
-systemctl unmask hostapd
-systemctl enable hostapd
-echo -n "
-country_code=NL
-interface=wlan0
-ssid=$AP_SSID
-hw_mode=g
-channel=7
-macaddr_acl=0
-auth_algs=1
-ignore_broadcast_ssid=0
-wpa=2
-wpa_passphrase=$AP_PASS
-wpa_key_mgmt=WPA-PSK
-wpa_pairwise=TKIP
-rsn_pairwise=CCMP
-" >> /etc/hostapd/hostapd.conf
-bash -c 'cat > /etc/default/hostapd' << EOF
-DAEMON_CONF="/etc/hostapd/hostapd.conf"
-EOF
-
 # Make sure Wifi radio is not blocked
 rfkill unblock wlan
+
+# Enable hostapd
+systemctl unmask hostapd
+systemctl enable hostapd
 
 # Create rem user
 PASS_CRYPT=`perl -e "print crypt($AP_PASS,'sa');"`

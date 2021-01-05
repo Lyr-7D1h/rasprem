@@ -29,4 +29,4 @@ IP=$1
 AP_SSID=$2
 AP_PASS=$3
 
-sshpass -p "raspberry" ssh pi@$IP "sudo bash -s" -- < setup.sh $AP_SSID $AP_PASS
+sshpass -p "raspberry" ssh -oStrictHostKeyChecking=no pi@$IP "sudo bash -s" -- < setup.sh $AP_SSID $AP_PASS

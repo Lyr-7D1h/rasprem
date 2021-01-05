@@ -1,8 +1,24 @@
 # Rasprem - Raspberry Remote
 
-Made and tested for Raspberry pi zero W
+Made and tested with Raspberry pi zero W
 
-Setup an Access Point to configure and setup the pi through a web interface.
+Always wanted access to a network without sitting there with your laptop the whole day. Then this project is just for you!
+
+You can configure the pi through an Wireless Access Point with the name configured.
+Setup the pi through a web interface.
+Leave the pi in the targeted network and use the pi as connection to the network.
+
+# Note
+
+The project is currently on hold. Due to me having to work on other projects. Might revisit this project in the future.
+
+TODO:
+
+- The complete remsetup might not work fully. (Not well tested)
+- The web interface to connect to a network does not copy to the pi yet.
+- The web interface is not accessable through the pi yet.
+- Lower power mode has not been implemented.
+- A obscured reverse shell has not been setup.
 
 # Setup
 
