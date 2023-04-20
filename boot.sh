@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Error handling
-set -e # Exit immediatly when command fails
-set -u # Exit when unset paramter is extended
+set -e 
+set -u 
 
 if [ $# != 3 ]; then
   echo "./boot {SSID} {SSID_PASS} {DEVICE}"

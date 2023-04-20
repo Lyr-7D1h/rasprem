@@ -37,7 +37,7 @@ And use and imager to install os to the sd.
 
 ## Boot Partition
 
-Before plugging in the sd card run this script so the setup script can be run later. This is used to setup the pi through your own network
+Before plugging in the sd card run this script so the setup script can be run later. This is used to setup the pi through your **own** network.
 
 ```sh
 ./boot.sh {SSID} {SSID_PASS} {DEVICE}
