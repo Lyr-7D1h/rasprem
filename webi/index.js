@@ -1,33 +1,33 @@
-const fastify = require("fastify")();
-const { exec } = require("child_process");
-const path = require("path");
+const { readFileSync } = require("node:fs");
+const http = require("node:http");
 
-fastify.register(require("fastify-static"), {
-  root: path.join(__dirname, "public"),
+const html = readFileSync("./index.html");
+
+const server = http.createServer();
+
+server.on("request", (req, res) => {
+  let data = "";
+
+  req.on("data", (b) => {
+    data += b;
+  });
+
+  req.on("error", console.error);
+
+  req.on("end", () => {
+    const url = new URL(req.url);
+    switch (url.pathname) {
+      case "credentials":
+        return "ok";
+      default:
+        res.setHeader("content-type", "text/html; charset=utf-8");
+        return html;
+    }
+  });
 });
 
-fastify.post("/credentials", (request, reply) => {
-  if (!request.body.SSID) {
-    reply.status(401);
-    return reply.send({ message: "SSID not found" });
-  }
-  if (!request.body.pass) {
-    reply.status(401);
-    return reply.send({ message: "pass not found" });
-  }
-
-  // TODO: Check connection given
-  exec(``);
-
-  reply.send({ message: "Success" });
+server.on("clientError", (err, socket) => {
+  socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
 });
 
-// TODO: Low power mode
-
-fastify.listen(5000, function (err, address) {
-  if (err) {
-    console.error(err);
-    process.exit(1);
-  }
-  console.log(`server listening on ${address}`);
-});
+server.listen(5000);

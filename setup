@@ -1,14 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Setup Access Point
-# Mimic samsung phone
+# Mimic samsung phone (mac and hostname)
 # Creates 'rem' user with AP_PASS
 # Removes default pi
 # https://github.com/lukicdarkoo/rpi-wifi/blob/master/configure
 # https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md
 
-# Error handling
-set -e # Exit immediatly when command fails
-set -u # Exit when unset paramter is extended
+set -eu
 
 # Input validation
 if [ $# != 2 ]; then
@@ -56,13 +54,12 @@ SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="${MAC_ADDRESS}"
  RUN+="/bin/ip link set ap0 address ${MAC_ADDRESS}
 EOF
 
-# Populate `/etc/dnsmasq.conf`
-# TODO: look more into dnsmasq
+echo "Populating /etc/dnsmasq.conf"
 sudo bash -c 'cat > /etc/dnsmasq.conf' << EOF
 interface=lo,ap0
 no-dhcp-interface=lo,wlan0
 bind-interfaces
-server=8.8.8.8
+server=1.1.1.1
 domain-needed
 bogus-priv
 dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
@@ -151,7 +148,7 @@ crontab -l | { cat; echo "@reboot /bin/rpi-wifi.sh"; } | crontab -
 
 # Samsung Electronics Co.,Ltd (BREAKS CONNECTION)
 # TODO: Randomize last bit
-# macchanger -m 50:85:69:63:13:82 wlan0 
+macchanger -m 50:85:69:63:13:82 wlan0 
 
 # Reboot
 systemctl reboot --now

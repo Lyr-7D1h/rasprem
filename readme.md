@@ -1,10 +1,10 @@
-# Rasprem - Raspberry Remote
+# RaspRem - Raspberry Remote
 
 Made and tested with Raspberry pi zero W
 
 Always wanted access to a network without sitting there with your laptop the whole day. Then this project is just for you!
 
-You can configure the pi through an Wireless Access Point with the name configured.
+You can configure the pi through an Wireless Access Point. Here you fill in the credentials you want the pi to connect  to .
 Setup the pi through a web interface.
 Leave the pi in the targeted network and use the pi as connection to the network.
 
@@ -27,36 +27,29 @@ TODO:
 - ssh
 - sshpass
 
-## Setup SD Card
+## Usage
 
-Download:
+You can either setup the bootable image locally using chroot and downloading raspios from the web or you can copy `./setup` to your raspberry and execute it on the device.
 
-https://www.raspberrypi.org/software/operating-systems/#raspberry-pi-os-32-bit
-
-And use and imager to install os to the sd.
-
-## Boot Partition
-
-Before plugging in the sd card run this script so the setup script can be run later. This is used to setup the pi through your **own** network.
+### Making a bootable image
 
 ```sh
-./boot.sh {SSID} {SSID_PASS} {DEVICE}
+./boot.sh {DEVICE} {SSID} {SSID_PASS} 
 ```
+
+DEVICE: What device is your sd card on? (eg. /dev/sdd) 
 
 SSID: Your wireless network name.
 
 SSID_PASS: Your plain wireless network password
 
-DEVICE: What device is your boot paritition? (eg. /dev/sdd1)
-
-## Setup
+### Setup script
 
 ```sh
-./remsetup.sh {IP} {AP_SSID} {AP_PASS}
+./setup {SSID} {SSID_PASS} 
 ```
 
-IP: The IP of your pi on your local network
+SSID: The name of the access point
 
-AP_SSID: The name for the AP (eg. `RaspRem`)
+PASS: The password of the access point
 
-AP_PASS: The password used to connect to the AP and for the `rem` user.(eg. `ThisIsAPasswordForRemoteAccess`)
