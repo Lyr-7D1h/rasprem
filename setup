@@ -45,7 +45,7 @@ apt-get install -y netfilter-persistent iptables-persistent
 # Change hostname
 echo "Galaxy S10+" > /etc/hostname
 
-# Populate `/etc/udev/rules.d/70-persistent-net.rules`
+echo Populating `/etc/udev/rules.d/70-persistent-net.rules`
 # TODO: might not be needed
 # TODO: should work with macchanger
 bash -c 'cat > /etc/udev/rules.d/70-persistent-net.rules' << EOF
@@ -54,7 +54,7 @@ SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="${MAC_ADDRESS}"
  RUN+="/bin/ip link set ap0 address ${MAC_ADDRESS}
 EOF
 
-echo "Populating /etc/dnsmasq.conf"
+echo Populating /etc/dnsmasq.conf
 sudo bash -c 'cat > /etc/dnsmasq.conf' << EOF
 interface=lo,ap0
 no-dhcp-interface=lo,wlan0
@@ -66,7 +66,7 @@ dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
 EOF
 
 
-# Populate `/etc/hostapd/hostapd.conf` 
+echo Populate `/etc/hostapd/hostapd.conf` 
 bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
 ctrl_interface=/var/run/hostapd
 ctrl_interface_group=0
@@ -87,13 +87,12 @@ wpa_pairwise=TKIP CCMP
 rsn_pairwise=CCMP
 EOF
 
-# Populate `/etc/default/hostapd`
+echo Populate `/etc/default/hostapd`
 bash -c 'cat > /etc/default/hostapd' << EOF
 DAEMON_CONF="/etc/hostapd/hostapd.conf"
 EOF
 
-
-# Populate `/etc/network/interfaces`
+echo Populate `/etc/network/interfaces`
 bash -c 'cat > /etc/network/interfaces' << EOF
 source-directory /etc/network/interfaces.d
 auto lo
@@ -111,21 +110,21 @@ iface wlan0 inet manual
 iface AP1 inet dhcp
 EOF
 
-# Make sure Wifi radio is not blocked
+echo Make sure Wifi radio is not blocked
 rfkill unblock wlan
 
-# Enable hostapd
+echo Enable hostapd
 systemctl unmask hostapd
 systemctl enable hostapd
 
-# Create rem user
+echo Create rem user
 PASS_CRYPT=`perl -e "print crypt($AP_PASS,'sa');"`
 useradd -m -p $PASS_CRYPT rem
 usermod -aG sudo rem
 # Remove default user
 userdel -rf pi
 
-# Populate `/bin/start_wifi.sh`
+echo Populate `/bin/start_wifi.sh`
 #TODO: remove routing of internet
 #TODO: macchanger on startup
 bash -c 'cat > /bin/rpi-wifi.sh' << EOF
@@ -148,7 +147,5 @@ crontab -l | { cat; echo "@reboot /bin/rpi-wifi.sh"; } | crontab -
 
 # Samsung Electronics Co.,Ltd (BREAKS CONNECTION)
 # TODO: Randomize last bit
+# TODO add systemd service
 macchanger -m 50:85:69:63:13:82 wlan0 
-
-# Reboot
-systemctl reboot --now
