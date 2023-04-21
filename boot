@@ -39,13 +39,15 @@ PWD=`mktemp -d`
 
 echo "Moving files to $PWD"
 cp ./setup $PWD 
-cp -r ./webi $PWD
+cp -r ./web $PWD
 
 echo "Moving into temporary directory $PWD"
 cd $PWD 
 
 echo "Downloading image"
-wget $OS_DOWNLOAD_LINK --output-document=raspios_lite_armhf_latest
+wget $OS_DOWNLOAD_LINK --output-document=raspios_lite_armhf_latest.xz
+echo Unpacking raspios_lite_armhf_latest.xz
+unxz raspios_lite_armhf_latest.xz
 echo "Writing image to $DEVICE"
 sudo dd bs=4M if=./raspios_lite_armhf_latest of=$DEVICE conv=fsync oflag=direct status=progress
 sync
@@ -60,6 +62,9 @@ mkdir -p $MOUNT
 echo Mounting $DEVICE to $MOUNT
 sudo mount -o rw ${DEVICE}2  $MOUNT
 sudo mount -o rw ${DEVICE}1 $MOUNT/boot
+
+echo Setting owner of $MOUNT to $USER
+sudo chown -R $USER:$USER $MOUNT
 
 # mount binds
 sudo mount --bind /dev $MOUNT/dev/
