@@ -34,7 +34,9 @@ PASS=$3
 echo "Going to directory of script"
 cd "$(dirname "$0")"
 
-echo "Making temp folder"
+# echo "Making temp folder"
+# PWD="/tmp/rasprem" 
+# mkdir -p $PWD
 PWD=`mktemp -d`
 
 echo "Moving files to $PWD"
@@ -63,9 +65,6 @@ echo Mounting $DEVICE to $MOUNT
 sudo mount -o rw ${DEVICE}2  $MOUNT
 sudo mount -o rw ${DEVICE}1 $MOUNT/boot
 
-echo Setting owner of $MOUNT to $USER
-sudo chown -R $USER:$USER $MOUNT
-
 # mount binds
 sudo mount --bind /dev $MOUNT/dev/
 sudo mount --bind /sys $MOUNT/sys/
@@ -73,45 +72,40 @@ sudo mount --bind /proc $MOUNT/proc/
 sudo mount --bind /dev/pts $MOUNT/dev/pts
 
 echo Adding remsetup executable
-mv $PWD/setup $MOUNT/usr/bin/remsetup
+sudo mv $PWD/setup $MOUNT/usr/bin/remsetup
 
 echo Enabling remote ssh
-touch $MOUNT/boot/ssh
-
-# ld.so.preload fix
-sed -i 's/^/#CHROOT /g' $MOUNT/etc/ld.so.preload
-
-# copy qemu binary
-cp /usr/bin/qemu-arm-static $MOUNT/usr/bin/
-
-# chroot to raspbian
-echo "Chrooting into $MOUNT and executing 'remsetup $SSID $PASS'"
-chroot $MOUNT /bin/bash -x <<EOF
-/usr/bin/remsetup "$SSID" "$PASS"
-EOF
-
-# ----------------------------
-# Clean up
-# revert ld.so.preload fix
-sed -i 's/^#CHROOT //g' $MOUNT/etc/ld.so.preload
-
-# unmount everything
-umount $MOUNT/{dev/pts,dev,sys,proc,boot,} 
+sudo touch $MOUNT/boot/ssh
 
 # echo -n "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 # update_config=1
 # country=NL
 #
 # network={
-#  ssid=\"$1\"
-#  psk=\"$2\"
+#  ssid=\"\"
+#  psk=\"\"
 # }
-# " > $MOUNT/boot/wpa_supplicant.conf
+# " | sudo tee $MOUNT/boot/wpa_supplicant.conf
 
+# ld.so.preload fix
+sudo sed -i 's/^/#CHROOT /g' $MOUNT/etc/ld.so.preload
 
+# copy qemu binary
+sudo cp /usr/bin/qemu-arm-static $MOUNT/usr/bin/
 
+# chroot to raspbian
+echo "Chrooting into $MOUNT and executing 'remsetup "$SSID" "$PASS"'"
+sudo chroot $MOUNT /bin/bash -x <<EOF
+/usr/bin/remsetup "$SSID" "$PASS"
+EOF
+
+# revert ld.so.preload fix
+sudo sed -i 's/^#CHROOT //g' $MOUNT/etc/ld.so.preload
+
+# unmount everything
 echo Unmounting tmp mount
-umount -R $MOUNT
+sudo umount $MOUNT/{dev/pts,dev,sys,proc,boot,} 
 
 echo Cleaning up temporary file
 rm -rf $MOUNT
+rm -rf $PWD

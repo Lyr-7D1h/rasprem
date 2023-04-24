@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Setup Access Point
 # Mimic samsung phone (mac and hostname)
-# Creates 'rem' user with AP_PASS
+# Creates 'monitor' user with AP_PASS
 # Removes default pi
 # https://github.com/lukicdarkoo/rpi-wifi/blob/master/configure
 # https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md
+# https://raspberrypi-guide.github.io/networking/create-wireless-access-point
 
 set -eu
 
@@ -22,40 +23,48 @@ if [ ${#2} -lt 8 ]; then
   exit 1
 fi
 
+
 AP_SSID=$1
 AP_PASS=$2
+USER="monitor"
 
 AP_IP='192.168.10.1'
 AP_IP_BEGIN=`echo "${AP_IP}" | sed -e 's/\.[0-9]\{1,3\}$//g'`
-#TODO: use randomized mac
-MAC_ADDRESS="$(cat /sys/class/net/wlan0/address)"
 
-# Prevent any interactive installs from blocking setup
 export DEBIAN_FRONTEND=noninteractive 
+# Get right binaries
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/game"
 
 # Update machine
 apt-get update && apt-get upgrade -y
 
 # Install needed packages
-apt-get install -y macchanger dnsmasq hostapd dhcpcd
+apt-get install -y macchanger dnsmasq hostapd dhcpcd node
 
 # Not sure if needed
 apt-get install -y netfilter-persistent iptables-persistent
 
-# Change hostname
+echo Changing hostname to "Galaxy S10+"
 echo "Galaxy S10+" > /etc/hostname
+sed -i '/raspberrypi/d' /etc/hosts
 
-echo Populating `/etc/udev/rules.d/70-persistent-net.rules`
-# TODO: might not be needed
-# TODO: should work with macchanger
-bash -c 'cat > /etc/udev/rules.d/70-persistent-net.rules' << EOF
-SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="${MAC_ADDRESS}", KERNEL=="phy0", \
- RUN+="/sbin/iw phy phy0 interface add ap0 type __ap", \
- RUN+="/bin/ip link set ap0 address ${MAC_ADDRESS}
-EOF
+echo Setting up locale
+echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+echo "LANG=en_US.UTF-" > /etc/locale.conf
+locale-gen
+
+echo Create $USER user
+PASS_CRYPT=`perl -e "print crypt($AP_PASS,'sa');"`
+useradd -m -p $PASS_CRYPT $USER
+usermod -aG sudo $USER
+echo Remove pi user
+userdel -rf pi
+
+echo Setup sudo permissions for $USER
+echo "$USER ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$USER
 
 echo Populating /etc/dnsmasq.conf
-sudo bash -c 'cat > /etc/dnsmasq.conf' << EOF
+bash -c 'cat > /etc/dnsmasq.conf' << EOF
 interface=lo,ap0
 no-dhcp-interface=lo,wlan0
 bind-interfaces
@@ -66,7 +75,7 @@ dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
 EOF
 
 
-echo Populate `/etc/hostapd/hostapd.conf` 
+echo Populate /etc/hostapd/hostapd.conf
 bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
 ctrl_interface=/var/run/hostapd
 ctrl_interface_group=0
@@ -87,12 +96,12 @@ wpa_pairwise=TKIP CCMP
 rsn_pairwise=CCMP
 EOF
 
-echo Populate `/etc/default/hostapd`
+echo Populate /etc/default/hostapd
 bash -c 'cat > /etc/default/hostapd' << EOF
 DAEMON_CONF="/etc/hostapd/hostapd.conf"
 EOF
 
-echo Populate `/etc/network/interfaces`
+echo Populate /etc/network/interfaces
 bash -c 'cat > /etc/network/interfaces' << EOF
 source-directory /etc/network/interfaces.d
 auto lo
@@ -110,33 +119,25 @@ iface wlan0 inet manual
 iface AP1 inet dhcp
 EOF
 
-echo Make sure Wifi radio is not blocked
-rfkill unblock wlan
+if command -v rfkill &> /dev/null ; then
+  echo Make sure Wifi radio is not blocked
+  rfkill unblock wlan
+fi
 
 echo Enable hostapd
 systemctl unmask hostapd
 systemctl enable hostapd
-
-echo Create rem user
-PASS_CRYPT=`perl -e "print crypt($AP_PASS,'sa');"`
-useradd -m -p $PASS_CRYPT rem
-usermod -aG sudo rem
-# Remove default user
-userdel -rf pi
-
-echo Populate `/bin/start_wifi.sh`
-#TODO: remove routing of internet
-#TODO: macchanger on startup
+echo Populate /bin/start_wifi.sh
 bash -c 'cat > /bin/rpi-wifi.sh' << EOF
 echo 'Starting Wifi AP and client...'
 sleep 30
-sudo ifdown --force wlan0
-sudo ifdown --force ap0
-sudo ifup ap0
-sudo ifup wlan0
-$([ "${NO_INTERNET-}" != "true" ] && echo "sudo sysctl -w net.ipv4.ip_forward=1")
-$([ "${NO_INTERNET-}" != "true" ] && echo "sudo iptables -t nat -A POSTROUTING -s ${AP_IP_BEGIN}.0/24 ! -d ${AP_IP_BEGIN}.0/24 -j MASQUERADE")
-$([ "${NO_INTERNET-}" != "true" ] && echo "sudo systemctl restart dnsmasq")
+ifdown --force wlan0
+ifdown --force ap0
+ifup ap0
+ifup wlan0
+$([ "${NO_INTERNET-}" != "true" ] && echo "sysctl -w net.ipv4.ip_forward=1")
+$([ "${NO_INTERNET-}" != "true" ] && echo "iptables -t nat -A POSTROUTING -s ${AP_IP_BEGIN}.0/24 ! -d ${AP_IP_BEGIN}.0/24 -j MASQUERADE")
+$([ "${NO_INTERNET-}" != "true" ] && echo "systemctl restart dnsmasq")
 EOF
 chmod +x /bin/rpi-wifi.sh
 
@@ -145,7 +146,19 @@ chmod +x /bin/rpi-wifi.sh
 crontab -l | { cat; echo "@reboot /bin/rpi-wifi.sh"; } | crontab -
 # exit
 
-# Samsung Electronics Co.,Ltd (BREAKS CONNECTION)
-# TODO: Randomize last bit
-# TODO add systemd service
-macchanger -m 50:85:69:63:13:82 wlan0 
+# Samsung Electronics Co.,Ltd 
+echo "Setting up permananent fake mac address"
+echo "[Unit]
+Description=macchanger on %I
+Wants=network-pre.target
+Before=network-pre.target
+BindsTo=sys-subsystem-net-devices-%i.device
+After=sys-subsystem-net-devices-%i.device
+
+[Service]
+ExecStart=/usr/bin/macchanger -m 50:85:69:63:13:82 %I
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/macchanger@.service 
+systemctl enable macchanger@wlan0.service
