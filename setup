@@ -39,7 +39,7 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/l
 apt-get update && apt-get upgrade -y
 
 # Install needed packages
-apt-get install -y macchanger dnsmasq hostapd dhcpcd nodej
+apt-get install -y macchanger dnsmasq hostapd dhcpcd nodejs
 
 # Not sure if needed
 apt-get install -y netfilter-persistent iptables-persistent
