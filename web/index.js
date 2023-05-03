@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const { readFileSync } = require("node:fs");
 const http = require("node:http");
 
