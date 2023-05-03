@@ -39,7 +39,7 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/l
 apt-get update && apt-get upgrade -y
 
 # Install needed packages
-apt-get install -y macchanger dnsmasq hostapd dhcpcd node
+apt-get install -y macchanger dnsmasq hostapd dhcpcd nodej
 
 # Not sure if needed
 apt-get install -y netfilter-persistent iptables-persistent
@@ -162,3 +162,17 @@ Type=oneshot
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/macchanger@.service 
 systemctl enable macchanger@wlan0.service
+
+echo "Setting web interface"
+echo "[Unit]
+Description=Web Interface for setting up wifi credentials
+Wants=network-pre.target
+Before=network-pre.target
+
+[Service]
+ExecStart=/usr/bin/node /var/www/html/index.js
+Type=simple
+
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/web-interface.service
+systemctl enable web-interface.service

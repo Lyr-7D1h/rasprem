@@ -74,6 +74,9 @@ sudo mount --bind /dev/pts $MOUNT/dev/pts
 echo Adding remsetup executable
 sudo mv $PWD/setup $MOUNT/usr/bin/remsetup
 
+echo Adding web interface
+sudo mv $PWD/web $MOUNT/var/www/html/
+
 echo Enabling remote ssh
 sudo touch $MOUNT/boot/ssh
 
