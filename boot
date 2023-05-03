@@ -71,6 +71,11 @@ sudo mount --bind /sys $MOUNT/sys/
 sudo mount --bind /proc $MOUNT/proc/
 sudo mount --bind /dev/pts $MOUNT/dev/pts
 
+
+#FIXME check for default settings
+# echo "Enabling peripherals"
+# echo "dtparam=spi=on" > /boot/config.txt
+
 echo Adding remsetup executable
 sudo mv $PWD/setup $MOUNT/usr/bin/remsetup
 

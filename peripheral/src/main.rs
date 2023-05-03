@@ -6,7 +6,7 @@ use rppal::gpio::Gpio;
 use rppal::system::DeviceInfo;
 
 // Gpio uses BCM pin numbering. BCM GPIO 23 is tied to physical pin 16.
-const GPIO_MIC: u8 = 4;
+const GPIO_MIC: u8 = 7;
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("Blinking an LED on a {}.", DeviceInfo::new()?.model());
