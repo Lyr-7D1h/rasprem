@@ -34,17 +34,17 @@ PASS=$3
 echo "Going to directory of script"
 cd "$(dirname "$0")"
 
-# echo "Making temp folder"
+echo "Making temp folder"
 # PWD="/tmp/rasprem" 
-# mkdir -p $PWD
-PWD=`mktemp -d`
+# mkdir -p $CWD
+CWD=`mktemp -d`
 
-echo "Moving files to $PWD"
-cp ./setup $PWD 
-cp -r ./web $PWD
+echo "Moving files to $CWD"
+cp ./setup $CWD 
+cp -r ./web $CWD
 
-echo "Moving into temporary directory $PWD"
-cd $PWD 
+echo "Moving into temporary directory $CWD"
+cd $CWD 
 
 echo "Downloading image"
 wget $OS_DOWNLOAD_LINK --output-document=raspios_lite_armhf_latest.xz
@@ -54,7 +54,7 @@ echo "Writing image to $DEVICE"
 sudo dd bs=4M if=./raspios_lite_armhf_latest of=$DEVICE conv=fsync oflag=direct status=progress
 sync
 
-MOUNT="$PWD/mount"
+MOUNT="$CWD/mount"
 mkdir -p $MOUNT
 
 
@@ -77,10 +77,11 @@ sudo mount --bind /dev/pts $MOUNT/dev/pts
 # echo "dtparam=spi=on" > /boot/config.txt
 
 echo Adding remsetup executable
-sudo mv $PWD/setup $MOUNT/usr/bin/remsetup
+sudo mv $CWD/setup $MOUNT/usr/bin/remsetup
 
 echo Adding web interface
-sudo mv $PWD/web $MOUNT/var/www/html/
+sudo mkdir -p $MOUNT/var/www/html/
+sudo mv $CWD/web $MOUNT/var/www/html/
 
 echo Enabling remote ssh
 sudo touch $MOUNT/boot/ssh
@@ -116,4 +117,4 @@ sudo umount $MOUNT/{dev/pts,dev,sys,proc,boot,}
 
 echo Cleaning up temporary file
 rm -rf $MOUNT
-rm -rf $PWD
+rm -rf $CWD

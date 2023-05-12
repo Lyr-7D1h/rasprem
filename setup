@@ -4,7 +4,6 @@
 # Creates 'monitor' user with AP_PASS
 # Removes default pi
 # https://github.com/lukicdarkoo/rpi-wifi/blob/master/configure
-# https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md
 # https://raspberrypi-guide.github.io/networking/create-wireless-access-point
 
 set -eu
@@ -39,7 +38,7 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/l
 apt-get update && apt-get upgrade -y
 
 # Install needed packages
-apt-get install -y macchanger dnsmasq hostapd dhcpcd nodejs
+apt-get install -y macchanger dnsmasq hostapd dhcpcd nodejs vim
 
 # Not sure if needed
 apt-get install -y netfilter-persistent iptables-persistent
@@ -127,9 +126,9 @@ fi
 echo Enable hostapd
 systemctl unmask hostapd
 systemctl enable hostapd
-echo Populate /bin/start_wifi.sh
-bash -c 'cat > /bin/rpi-wifi.sh' << EOF
-echo 'Starting Wifi AP and client...'
+
+echo Create and enable custom boot script service /bin/start_wifi.sh
+echo "echo 'Starting Wifi AP and client...'
 sleep 30
 ifdown --force wlan0
 ifdown --force ap0
@@ -137,14 +136,20 @@ ifup ap0
 ifup wlan0
 $([ "${NO_INTERNET-}" != "true" ] && echo "sysctl -w net.ipv4.ip_forward=1")
 $([ "${NO_INTERNET-}" != "true" ] && echo "iptables -t nat -A POSTROUTING -s ${AP_IP_BEGIN}.0/24 ! -d ${AP_IP_BEGIN}.0/24 -j MASQUERADE")
-$([ "${NO_INTERNET-}" != "true" ] && echo "systemctl restart dnsmasq")
-EOF
+$([ "${NO_INTERNET-}" != "true" ] && echo "systemctl restart dnsmasq")" > /bin/rpi-wifi.sh
 chmod +x /bin/rpi-wifi.sh
+echo "[Unit]
+Description=Simultaneous AP and Managed Mode Wifi on Raspberry Pi
+Requires=network.target
+After=network.target
 
-# Set crontab for rem
-# su - rem
-crontab -l | { cat; echo "@reboot /bin/rpi-wifi.sh"; } | crontab -
-# exit
+[Service]
+ExecStart=/bin/bash -c 'rpi-wifi.sh'
+User=root
+
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/rpi-wifi.service
+sudo systemctl enable rpi-wifi.service
 
 # Samsung Electronics Co.,Ltd 
 echo "Setting up permananent fake mac address"
@@ -171,6 +176,7 @@ Before=network-pre.target
 
 [Service]
 ExecStart=/usr/bin/node /var/www/html/index.js
+Environment=PORT=80
 Type=simple
 
 [Install]

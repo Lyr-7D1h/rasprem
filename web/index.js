@@ -1,19 +1,25 @@
 #!/usr/bin/env node
-const { exec } = require("node:child_process");
-const { readFileSync } = require("node:fs");
-const http = require("node:http");
+const util = require("util");
+const http = require("http");
+const { readFileSync } = require("fs");
+const { join } = require("path");
+const exec = util.promisify(require("child_process").exec);
 
-const html = readFileSync("./index.html");
+const PORT = process.env.PORT || 5000;
+const html = readFileSync(join(__dirname, "index.html"));
 
 const server = http.createServer();
 
-function requestHandler(req, res, data) {
+async function requestHandler(req, res, data) {
   switch (req.url) {
     case "/credentials":
-      const { ssid, pass } = data;
-      console.log(ssid, pass);
-      exec(`iwconfig wlan0 essid ${ssid} key ${pass}`);
+      const { ssid, pass } = JSON.parse(data);
+      await exec(`iwconfig wlan0 essid "${ssid}" key "${pass}"`);
       res.write("ok");
+      break;
+    case "/networks":
+      const { stdout } = await exec("iwlist wlan0 scan");
+      console.log(stdout);
       break;
     default:
       res.setHeader("content-type", "text/html; charset=utf-8");
@@ -41,4 +47,6 @@ server.on("clientError", (err, socket) => {
   socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
 });
 
-server.listen(5000);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Listening on port ${PORT}...`);
+});
