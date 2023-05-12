@@ -5,7 +5,11 @@
 
 set -eu
 
-echo "Be sure to have installed requirements: qemu qemu-user-static binfmt-support"
+if [[ ! -f /usr/bin/qemu-arm-static ]]; then
+  echo "Be sure to have installed requirements: qemu qemu-user-static-binfmt"
+  exit 1
+fi
+
 OS_DOWNLOAD_LINK="https://downloads.raspberrypi.org/raspios_lite_armhf_latest"
 
 help() {
@@ -82,15 +86,15 @@ sudo mv $PWD/setup $MOUNT/usr/bin/remsetup
 echo Enabling remote ssh
 sudo touch $MOUNT/boot/ssh
 
-# echo -n "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-# update_config=1
-# country=NL
-#
-# network={
-#  ssid=\"\"
-#  psk=\"\"
-# }
-# " | sudo tee $MOUNT/boot/wpa_supplicant.conf
+echo -n "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country=NL
+
+network={
+ ssid=\"\"
+ psk=\"\"
+}
+" | sudo tee $MOUNT/boot/wpa_supplicant.conf
 
 # ld.so.preload fix
 sudo sed -i 's/^/#CHROOT /g' $MOUNT/etc/ld.so.preload
