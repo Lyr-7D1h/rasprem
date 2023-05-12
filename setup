@@ -5,6 +5,8 @@
 # Removes default pi
 # https://github.com/lukicdarkoo/rpi-wifi/blob/master/configure
 # https://raspberrypi-guide.github.io/networking/create-wireless-access-point
+# Making an access point: https://wiki.archlinux.org/title/Software_access_point
+#                         https://superuser.com/questions/155795/can-a-linux-machine-act-as-both-a-wireless-client-and-access-point-simultaneousl
 
 set -eu
 
@@ -75,6 +77,7 @@ userdel -rf pi
 echo Setup sudo permissions for $USER
 echo "$USER ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$USER
 
+
 echo Populating /etc/dnsmasq.conf
 bash -c 'cat > /etc/dnsmasq.conf' << EOF
 interface=lo,ap0
@@ -85,7 +88,6 @@ domain-needed
 bogus-priv
 dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
 EOF
-
 
 echo Populate /etc/hostapd/hostapd.conf
 bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
@@ -113,23 +115,26 @@ bash -c 'cat > /etc/default/hostapd' << EOF
 DAEMON_CONF="/etc/hostapd/hostapd.conf"
 EOF
 
-echo Populate /etc/network/interfaces
-bash -c 'cat > /etc/network/interfaces' << EOF
-source-directory /etc/network/interfaces.d
-auto lo
-auto ap0
-auto wlan0
-iface lo inet loopback
-allow-hotplug ap0
-iface ap0 inet static
-   address ${AP_IP}
-   netmask 255.255.255.0
-   hostapd /etc/hostapd/hostapd.conf
-allow-hotplug wlan0
-iface wlan0 inet manual
-   wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
-iface AP1 inet dhcp
-EOF
+# echo Populate /etc/network/interfaces
+# bash -c 'cat > /etc/network/interfaces' << EOF
+# source-directory /etc/network/interfaces.d
+# auto lo
+# auto ap0
+# auto wlan0
+# iface lo inet loopback
+# allow-hotplug ap0
+# iface ap0 inet static
+#    address ${AP_IP}
+#    netmask 255.255.255.0
+#    hostapd /etc/hostapd/hostapd.conf
+# allow-hotplug wlan0
+# iface wlan0 inet manual
+#    wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
+# iface AP1 inet dhcp
+# EOF
+echo "Creating interfaces"
+iw dev wlan0 interface add wlan0_sta type managed addr 50:85:69:63:13:82  
+iw dev wlan0 interface add wlan0_ap  type managed addr 12:34:56:78:ab:ce
 
 if command -v rfkill &> /dev/null ; then
   echo Make sure Wifi radio is not blocked
@@ -140,46 +145,47 @@ echo Enable hostapd
 systemctl unmask hostapd
 systemctl enable hostapd
 
-echo Create and enable custom boot script service /bin/start_wifi.sh
-echo "echo 'Starting Wifi AP and client...'
-sleep 30
-ifdown --force wlan0
-ifdown --force ap0
-ifup ap0
-ifup wlan0
-$([ "${NO_INTERNET-}" != "true" ] && echo "sysctl -w net.ipv4.ip_forward=1")
-$([ "${NO_INTERNET-}" != "true" ] && echo "iptables -t nat -A POSTROUTING -s ${AP_IP_BEGIN}.0/24 ! -d ${AP_IP_BEGIN}.0/24 -j MASQUERADE")
-$([ "${NO_INTERNET-}" != "true" ] && echo "systemctl restart dnsmasq")" > /bin/rpi-wifi.sh
-chmod +x /bin/rpi-wifi.sh
-echo "[Unit]
-Description=Simultaneous AP and Managed Mode Wifi on Raspberry Pi
-Requires=network.target
-After=network.target
 
-[Service]
-ExecStart=/bin/bash -c 'rpi-wifi.sh'
-User=root
-
-[Install]
-WantedBy=multi-user.target" > /etc/systemd/system/rpi-wifi.service
-sudo systemctl enable rpi-wifi.service
+# echo Create and enable custom boot script service /bin/start_wifi.sh
+# echo "echo 'Starting Wifi AP and client...'
+# sleep 30
+# ifdown --force wlan0
+# ifdown --force ap0
+# ifup ap0
+# ifup wlan0
+# $([ "${NO_INTERNET-}" != "true" ] && echo "sysctl -w net.ipv4.ip_forward=1")
+# $([ "${NO_INTERNET-}" != "true" ] && echo "iptables -t nat -A POSTROUTING -s ${AP_IP_BEGIN}.0/24 ! -d ${AP_IP_BEGIN}.0/24 -j MASQUERADE")
+# $([ "${NO_INTERNET-}" != "true" ] && echo "systemctl restart dnsmasq")" > /bin/rpi-wifi.sh
+# chmod +x /bin/rpi-wifi.sh
+# echo "[Unit]
+# Description=Simultaneous AP and Managed Mode Wifi on Raspberry Pi
+# Requires=network.target
+# After=network.target
+#
+# [Service]
+# ExecStart=/bin/bash -c 'rpi-wifi.sh'
+# User=root
+#
+# [Install]
+# WantedBy=multi-user.target" > /etc/systemd/system/rpi-wifi.service
+# sudo systemctl enable rpi-wifi.service
 
 # Samsung Electronics Co.,Ltd 
-echo "Setting up permananent fake mac address"
-echo "[Unit]
-Description=macchanger on %I
-Wants=network-pre.target
-Before=network-pre.target
-BindsTo=sys-subsystem-net-devices-%i.device
-After=sys-subsystem-net-devices-%i.device
-
-[Service]
-ExecStart=/usr/bin/macchanger -m 50:85:69:63:13:82 %I
-Type=oneshot
-
-[Install]
-WantedBy=multi-user.target" > /etc/systemd/system/macchanger@.service 
-systemctl enable macchanger@wlan0.service
+# echo "Setting up permananent fake mac address"
+# echo "[Unit]
+# Description=macchanger on %I
+# Wants=network-pre.target
+# Before=network-pre.target
+# BindsTo=sys-subsystem-net-devices-%i.device
+# After=sys-subsystem-net-devices-%i.device
+#
+# [Service]
+# ExecStart=/usr/bin/macchanger -m 50:85:69:63:13:82 %I
+# Type=oneshot
+#
+# [Install]
+# WantedBy=multi-user.target" > /etc/systemd/system/macchanger@.service 
+# systemctl enable macchanger@wlan0.service
 
 echo "Setting web interface"
 echo "[Unit]
