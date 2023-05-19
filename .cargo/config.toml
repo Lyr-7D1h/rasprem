@@ -1,0 +1,7 @@
+[build]
+# target = "armv7-unknown-linux-gnueabi"
+target = "arm-unknown-linux-musleabi"
+# target = "armv7-unknown-linux-gnueabihf" # (raspberry pi zero does not support hf (hard floating point numbers))
+
+# [target.armv7-unknown-linux-gnueabi]
+# linker = "arm-none-eabi-gcc"

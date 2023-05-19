@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# Upload and run code to pi
+#
+echo "Ensure cross is installed: https://github.com/cross-rs/cross"
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o xtrace
+set -eu
+
+readonly TARGET_HOST=monitor
+readonly TARGET_PATH=/home/monitor/rasprem
+# readonly TARGET_ARCH=armv7-unknown-linux-gnueabi
+readonly TARGET_ARCH=arm-unknown-linux-musleabi
+
+readonly PACKAGE_NAME=`cat Cargo.toml | grep "^name = " | cut -d " " -f3 | sed "s/\"//g"`
+readonly SOURCE_PATH=./target/${TARGET_ARCH}/release/$PACKAGE_NAME
+
+cd "$(dirname "$0")"
+
+help() {
+  echo "upload {ssh_host}"
+  exit 1
+}
+
+
+cross build --release --target=${TARGET_ARCH}
+scp ${SOURCE_PATH} ${TARGET_HOST}:${TARGET_PATH}
+ssh -t ${TARGET_HOST} ${TARGET_PATH} 
