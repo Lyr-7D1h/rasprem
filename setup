@@ -143,9 +143,9 @@ EOF
 #    wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
 # iface AP1 inet dhcp
 # EOF
-echo "Creating interfaces"
-iw dev wlan0 interface add wlan0_sta type managed addr 50:85:69:63:13:82  
-iw dev wlan0 interface add wlan0_ap  type managed addr 12:34:56:78:ab:ce
+# echo "Creating interfaces"
+# iw dev wlan0 interface add wlan0_sta type managed addr 50:85:69:63:13:82  
+# iw dev wlan0 interface add wlan0_ap  type managed addr 12:34:56:78:ab:ce
 
 if command -v rfkill &> /dev/null ; then
   echo Make sure Wifi radio is not blocked

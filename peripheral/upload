@@ -20,12 +20,10 @@ readonly SOURCE_PATH=./target/${TARGET_ARCH}/release/$PACKAGE_NAME
 
 cd "$(dirname "$0")"
 
-help() {
-  echo "upload {ssh_host}"
-  exit 1
+upload() {
+  cross build --release --target=${TARGET_ARCH} 
+  scp ${SOURCE_PATH} ${TARGET_HOST}:${TARGET_PATH} 
+  ssh -t ${TARGET_HOST} ${TARGET_PATH}
 }
 
-
-cross build --release --target=${TARGET_ARCH}
-scp ${SOURCE_PATH} ${TARGET_HOST}:${TARGET_PATH}
-ssh -t ${TARGET_HOST} ${TARGET_PATH} 
+upload
