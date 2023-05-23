@@ -53,3 +53,7 @@ SSID: The name of the access point
 
 PASS: The password of the access point
 
+
+### Roadmap
+
+- Remote pi hole

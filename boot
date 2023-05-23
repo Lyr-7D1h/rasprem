@@ -58,14 +58,16 @@ if [[ ! -f raspios_lite_armhf_latest ]]; then
 fi
 
 echo "Writing image to $DEVICE"
-sudo dd bs=4M if=./raspios_lite_armhf_latest of=$DEVICE conv=fsync oflag=direct status=progress
-sync
+sudo dd bs=1M if=./raspios_lite_armhf_latest of=$DEVICE conv=fsync oflag=direct status=progress
+sudo sync
 
 MOUNT="$CWD/mount"
 
 if [[ -d $MOUNT ]]; then
-  sudo umount -R $MOUNT
+  set +e
+  sudo umount -R $MOUNT 
   sudo rm -rf $MOUNT 
+  set -e
 fi
 
 mkdir -p $MOUNT
@@ -104,8 +106,8 @@ update_config=1
 country=NL
 
 network={
- ssid=\"401 Unauthorized\"
- psk=\"r8g9hghnybza86r\"
+ ssid=\"\"
+ psk=\"\"
 }
 " | sudo tee $MOUNT/boot/wpa_supplicant.conf
 
