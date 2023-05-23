@@ -15,7 +15,7 @@ const GPIO_MISO: u8 = 9;
 const GPIO_SS: u8 = 22;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut pin = Gpio::new()?.get(23)?.into_output();
+    let mut pin = Gpio::new()?.get(22)?.into_output();
 
     loop {
         println!("Blinking an LED on a {}.", DeviceInfo::new()?.model());

@@ -39,9 +39,9 @@ echo "Going to directory of script"
 cd "$(dirname "$0")"
 
 echo "Making temp folder"
-# PWD="/tmp/rasprem" 
-# mkdir -p $CWD
-CWD=`mktemp -d`
+CWD="/tmp/rasprem" 
+# CWD=`mktemp -d`
+mkdir -p $CWD
 
 echo "Moving files to $CWD"
 cp ./setup $CWD 
@@ -50,15 +50,24 @@ cp -r ./web $CWD
 echo "Moving into temporary directory $CWD"
 cd $CWD 
 
-echo "Downloading image"
-wget $OS_DOWNLOAD_LINK --output-document=raspios_lite_armhf_latest.xz
-echo Unpacking raspios_lite_armhf_latest.xz
-unxz raspios_lite_armhf_latest.xz
+if [[ ! -f raspios_lite_armhf_latest ]]; then
+  echo "Downloading image"
+  wget $OS_DOWNLOAD_LINK --output-document=raspios_lite_armhf_latest.xz
+  echo Unpacking raspios_lite_armhf_latest.xz
+  unxz raspios_lite_armhf_latest.xz
+fi
+
 echo "Writing image to $DEVICE"
 sudo dd bs=4M if=./raspios_lite_armhf_latest of=$DEVICE conv=fsync oflag=direct status=progress
 sync
 
 MOUNT="$CWD/mount"
+
+if [[ -d $MOUNT ]]; then
+  sudo umount -R $MOUNT
+  sudo rm -rf $MOUNT 
+fi
+
 mkdir -p $MOUNT
 
 
@@ -95,8 +104,8 @@ update_config=1
 country=NL
 
 network={
- ssid=\"\"
- psk=\"\"
+ ssid=\"401 Unauthorized\"
+ psk=\"r8g9hghnybza86r\"
 }
 " | sudo tee $MOUNT/boot/wpa_supplicant.conf
 
