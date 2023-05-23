@@ -106,8 +106,8 @@ update_config=1
 country=NL
 
 network={
- ssid=\"401 Unauthorized\"
- psk=\"r8g9hghnybza86r\"
+ ssid=\"\"
+ psk=\"\"
 }
 " | sudo tee $MOUNT/boot/wpa_supplicant.conf
 
