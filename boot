@@ -40,7 +40,6 @@ cd "$(dirname "$0")"
 
 echo "Making temp folder"
 CWD="/tmp/rasprem" 
-# CWD=`mktemp -d`
 mkdir -p $CWD
 
 echo "Moving files to $CWD"
@@ -87,9 +86,10 @@ sudo mount --bind /proc $MOUNT/proc/
 sudo mount --bind /dev/pts $MOUNT/dev/pts
 
 
-#FIXME check for default settings
-# echo "Enabling peripherals"
-# echo "dtparam=spi=on" > /boot/config.txt
+echo "Enabling peripherals"
+echo "dtparam=spi=on
+dtparam=audio=off
+camera_auto_detect=0" > /boot/config.txt
 
 echo Adding remsetup executable
 sudo mv $CWD/setup $MOUNT/usr/bin/remsetup
@@ -105,6 +105,10 @@ echo -n "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 country=NL
 
+network={
+ ssid=\"\"
+ psk=\"\"
+}
 network={
  ssid=\"\"
  psk=\"\"
@@ -132,4 +136,3 @@ sudo umount $MOUNT/{dev/pts,dev,sys,proc,boot,}
 
 echo Cleaning up temporary file
 rm -rf $MOUNT
-rm -rf $CWD

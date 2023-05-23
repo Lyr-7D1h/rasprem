@@ -1,8 +1,8 @@
 use std::error::Error;
 use std::thread::{self};
-use std::time::Duration;
 
 use rppal::gpio::Gpio;
+use rppal::spi::Spi;
 use rppal::system::DeviceInfo;
 
 // Gpio uses BCM pin numbering. BCM GPIO 23 is tied to physical pin 16.
@@ -15,14 +15,19 @@ const GPIO_MISO: u8 = 9;
 const GPIO_SS: u8 = 22;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut pin = Gpio::new()?.get(22)?.into_output();
+    let adc = Spi::new(
+        rppal::spi::Bus::Spi0,
+        rppal::spi::SlaveSelect::Ss0,
+        36 * 100000,             // 36 Mhz
+        rppal::spi::Mode::Mode3, // High on idle, side change on slope down, reading on slope up
+    )?;
+    println!("{}", adc.ss_polarity()?);
+    // Single ended channel 0
+    let mut buffer = [0; 3];
 
-    loop {
-        println!("Blinking an LED on a {}.", DeviceInfo::new()?.model());
-        // Blink the LED by setting the pin's logic level high for 500 ms.
-        pin.set_high();
-        thread::sleep(Duration::from_millis(500));
-        pin.set_low();
-        thread::sleep(Duration::from_millis(500));
-    }
+    let written = adc.transfer(&mut buffer, &[0b11000 as u8])?;
+    assert!(written == 1);
+    println!("{buffer:?}");
+
+    Ok(())
 }
