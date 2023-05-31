@@ -2,7 +2,7 @@ use std::error::Error;
 use std::thread::{self};
 
 use rppal::gpio::Gpio;
-use rppal::spi::Spi;
+use rppal::spi::{Polarity, Spi};
 use rppal::system::DeviceInfo;
 
 // Gpio uses BCM pin numbering. BCM GPIO 23 is tied to physical pin 16.
@@ -18,15 +18,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let adc = Spi::new(
         rppal::spi::Bus::Spi0,
         rppal::spi::SlaveSelect::Ss0,
-        36 * 100000,             // 36 Mhz
-        rppal::spi::Mode::Mode3, // High on idle, side change on slope down, reading on slope up
+        1 * 10 * 6,              // 36 Mhz
+        rppal::spi::Mode::Mode3, // CPOL 1, CPHA 1:  High on idle, side change on slope down, reading on slope up
     )?;
-    println!("{}", adc.ss_polarity()?);
+    assert_eq!(adc.ss_polarity()?, Polarity::ActiveLow);
     // Single ended channel 0
     let mut buffer = [0; 3];
+    // start + diff + d2 + d1 + d0
+    let command = [0b00000001, 0b11000000, 0];
+    println!("{command:?}");
 
-    let written = adc.transfer(&mut buffer, &[0b11000 as u8])?;
-    assert!(written == 1);
+    adc.transfer(&mut buffer, &command)?;
     println!("{buffer:?}");
 
     Ok(())
